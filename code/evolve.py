@@ -4,6 +4,8 @@ from deap import base, creator, tools, algorithms
 from operator import mul, add
 import random
 
+from utils import * 
+
 import pdb 
 
 def GetParser():
@@ -40,9 +42,9 @@ def PostprocessOpts(opts):
 
     opts.input_dim = [int(x) for x in opts.input_dim.split('x')]
     opts.dims = [opts.input_dim[0]*opts.input_dim[1], opts.num_hidden, opts.num_actions]
-    num_weights = reduce(mul, opts.dims, 1)
-    num_biases = reduce(add, opts.dims[1:], 0)
-    opts.num_params = num_weights + num_biases
+    opts.num_weights = reduce(mul, opts.dims, 1)
+    opts.num_biases = reduce(add, opts.dims[1:], 0)
+    opts.num_params = opts.num_weights + opts.num_biases
 
     opts.mutate_args = {x.split('=')[0]: x.split('=')[1] for x in opts.mutate_args.split(',')}
     opts.select_args = {x.split('=')[0]: x.split('=')[1] for x in opts.select_args.split(',')}
@@ -69,7 +71,8 @@ def Evolve(opts):
 
     #initial population generation and evolving.. 
     pop = toolbox.population_init()
-    pdb.set_trace()
+
+    #testing code here
     final_pop, log = algorithms.eaSimple(pop, toolbox, cxpb=opts.crossover_prob, mutpb=opts.mutate_prob, 
                                         ngen=opts.num_gens)
 
