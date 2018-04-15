@@ -31,6 +31,12 @@ def Ind2Network(ind, opts):
 
 
 def ForwardPass(net, input): 
-    """Translates the individual/chromosome into network and forward-pass the input"""
+    """Forward pass the input through network (represented in dictionary)"""
     
-    return None 
+    weights, biases = net['weights'], net['biases']
+
+    for w,b in izip(weights, biases): 
+        input = w.dot(input) + b
+        input[input < 0] = 0 #relu activation
+
+    return input 
