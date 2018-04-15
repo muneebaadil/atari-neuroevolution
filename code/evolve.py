@@ -5,19 +5,20 @@ from operator import mul, add
 import random
 
 from utils import * 
+from evaluate import Evaluate
 
 import pdb 
 
 def GetParser():
-    parser = argparse.ArgumentParser(description='Atari using Neurovolution')
+    parser = argparse.ArgumentParser(description='Atari using Neuroevolution')
     
     #neural network parameters
-    parser.add_argument('--input_dim',action='store', type=str, default='80x80', dest='input_dim')
-    parser.add_argument('--num_hidden',action='store', type=int, default=200, dest='num_hidden')
-    parser.add_argument('--num_actions',action='store', type=int, default=2, dest='num_actions')
+    parser.add_argument('--input_dim',action='store', type=str, default='210x160x3', dest='input_dim')
+    parser.add_argument('--num_hidden',action='store', type=int, default=6, dest='num_hidden')
+    parser.add_argument('--num_actions',action='store', type=int, default=6, dest='num_actions')
 
     #optimization parameters
-    parser.add_argument('--population_size',action='store',type=int,default=10, dest='population_size')
+    parser.add_argument('--population_size',action='store',type=int,default=1, dest='population_size')
     parser.add_argument('--num_gens',action='store',type=int,default=10, dest='num_gens')
     
     parser.add_argument('--crossover_type',action='store',type=str,default='cxTwoPoint', dest='crossover_type')
@@ -32,16 +33,19 @@ def GetParser():
     parser.add_argument('--num_select',action='store', type=int, default=2, dest='num_select')
     parser.add_argument('--select_args',action='store', type=str, default='tournsize=2', dest='select_args')
     
-    #misc
+    #evaluation parameters
+    parser.add_argument('--game_name',action='store', type=str, default='Pong-v0', dest='game_name')
+
+    # logging/verbosity parameters.. 
+    parser.add_argument('--render',action='store', type=bool, default=False, dest='render')
     # parser.add_argument('--resume',action='store', type=bool, default=False, dest='resume')
-    # parser.add_argument('--render',action='store', type=bool, default=False, dest='render')
 
     return parser
 
 def PostprocessOpts(opts): 
 
     opts.input_dim = [int(x) for x in opts.input_dim.split('x')]
-    opts.dims = [opts.input_dim[0]*opts.input_dim[1], opts.num_hidden, opts.num_actions]
+    opts.dims = [reduce(mul, opts.input_dim, 1), opts.num_hidden, opts.num_actions]
     opts.num_weights = reduce(mul, opts.dims, 1)
     opts.num_biases = reduce(add, opts.dims[1:], 0)
     opts.num_params = opts.num_weights + opts.num_biases
@@ -56,7 +60,7 @@ def Evolve(opts):
     creator.create("FitnessMax", base.Fitness, weights=(1.,))
     creator.create("Network", array, fitness=creator.FitnessMax, typecode='f')
 
-    #registering initialization functions..
+    #registering initialization functions and game environment..
     toolbox = base.Toolbox()
     toolbox.register("neuron_init", random.random)
     toolbox.register("network_init", tools.initRepeat, creator.Network, 
@@ -64,14 +68,14 @@ def Evolve(opts):
     toolbox.register("population_init", tools.initRepeat, list, toolbox.network_init, n=opts.population_size)
 
     #cross-over, mutation and selection strategy.. 
-    #toolbox.register("evaluate", EvaluateNetwork) fill this line..
+    toolbox.register("evaluate", Evaluate, opts=opts)
     toolbox.register("mate", getattr(tools, opts.crossover_type))
     toolbox.register("mutate", getattr(tools, opts.mutate_type), indpb=opts.mutate_indpb, **opts.mutate_args)
     toolbox.register("select", getattr(tools, opts.select_type), **opts.select_args)
 
     #initial population generation and evolving.. 
     pop = toolbox.population_init()
-
+    #pdb.set_trace()
     #testing code here
     final_pop, log = algorithms.eaSimple(pop, toolbox, cxpb=opts.crossover_prob, mutpb=opts.mutate_prob, 
                                         ngen=opts.num_gens)
