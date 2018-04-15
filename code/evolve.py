@@ -35,9 +35,12 @@ def GetParser():
     
     #evaluation parameters
     parser.add_argument('--game_name',action='store', type=str, default='Pong-v0', dest='game_name')
+    parser.add_argument('--num_episodes',action='store', type=int, default=1, dest='num_episodes')
 
     # logging/verbosity parameters.. 
     parser.add_argument('--render',action='store', type=bool, default=False, dest='render')
+    parser.add_argument('--verbose',action='store', type=bool, default=False, dest='verbose')
+
     # parser.add_argument('--resume',action='store', type=bool, default=False, dest='resume')
 
     return parser
@@ -50,12 +53,12 @@ def PostprocessOpts(opts):
     opts.num_biases = reduce(add, opts.dims[1:], 0)
     opts.num_params = opts.num_weights + opts.num_biases
 
-    opts.mutate_args = {x.split('=')[0]: x.split('=')[1] for x in opts.mutate_args.split(',')}
-    opts.select_args = {x.split('=')[0]: x.split('=')[1] for x in opts.select_args.split(',')}
+    opts.mutate_args = {x.split('=')[0]: int(x.split('=')[1]) for x in opts.mutate_args.split(',')}
+    opts.select_args = {x.split('=')[0]: int(x.split('=')[1]) for x in opts.select_args.split(',')}
     return 
 
 def Evolve(opts): 
-
+    print '[Info]: Initializing setup..'
     #base class for individuals and fitness function
     creator.create("FitnessMax", base.Fitness, weights=(1.,))
     creator.create("Network", array, fitness=creator.FitnessMax, typecode='f')
@@ -73,12 +76,19 @@ def Evolve(opts):
     toolbox.register("mutate", getattr(tools, opts.mutate_type), indpb=opts.mutate_indpb, **opts.mutate_args)
     toolbox.register("select", getattr(tools, opts.select_type), **opts.select_args)
 
+    #configuring logging
+    stats = tools.Statistics(lambda ind: ind.fitness.values)
+    stats.register("avg", np.mean)
+    stats.register("min", np.min)
+    stats.register("max", np.max)
+
     #initial population generation and evolving.. 
+    print '[Info]: Generating initial population..'
     pop = toolbox.population_init()
-    #pdb.set_trace()
-    #testing code here
+
+    print '[Info]: Optimization start!'
     final_pop, log = algorithms.eaSimple(pop, toolbox, cxpb=opts.crossover_prob, mutpb=opts.mutate_prob, 
-                                        ngen=opts.num_gens)
+                                        ngen=opts.num_gens, stats=stats,verbose=opts.verbose)
 
 if __name__=='__main__': 
     parser = GetParser()

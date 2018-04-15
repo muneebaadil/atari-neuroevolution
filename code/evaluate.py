@@ -11,9 +11,9 @@ def Evaluate(ind, opts):
     game_env = gym.make(opts.game_name)
     curr_input = game_env.reset().flatten()[:,np.newaxis]
 
-    total_reward, done = 0, None 
+    total_reward, num_done = 0, 0
     
-    while done!=False: 
+    while num_done < opts.num_episodes: 
 
         out = ForwardPass(net_dict, curr_input)
         action = out.argmax(axis=0)
@@ -21,8 +21,12 @@ def Evaluate(ind, opts):
         curr_input, reward, done, info = game_env.step(action)
         curr_input = curr_input.flatten()[:,np.newaxis]
 
-        print 'reward = {}'.format(reward)
         if reward !=0: #if a single game is ended..
             total_reward += reward
 
-    return total_reward
+        if done: 
+            num_done += 1 
+            game_env.reset().flatten()[:,np.newaxis]
+            
+    print 'total reward = {}'.format(total_reward)
+    return total_reward,
