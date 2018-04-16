@@ -45,17 +45,17 @@ def GetParser():
     parser.add_argument('--game_name',action='store', type=str, default='Pong-v0', dest='game_name')
     parser.add_argument('--num_episodes',action='store', type=int, default=1, dest='num_episodes')
 
-    # logging/verbosity parameters.. 
-    parser.add_argument('--hof_maxsize',action='store', type=int, default=1, dest='hof_maxsize')
-
-    parser.add_argument('--render',action='store', type=bool, default=False, dest='render')
-    parser.add_argument('--verbose',action='store', type=bool, default=False, dest='verbose')
+    #logging/verbosity parameters.. 
+    parser.add_argument('--load',action='store', type=str, default=None, dest='load')
     parser.add_argument('--exp_root_dir',action='store', type=str, default='../experiments', dest='exp_root_dir')
     parser.add_argument('--exp_name',action='store', type=str, default=strftime("%Y-%m-%d__%H-%M-%S",gmtime()),
                          dest='exp_name')
-
-    # parser.add_argument('--resume',action='store', type=bool, default=False, dest='resume')
-
+    parser.add_argument('--save_every',action='store', type=int, default=5, dest='save_every')
+    parser.add_argument('--hof_maxsize',action='store', type=int, default=1, dest='hof_maxsize')
+    
+    #misc
+    parser.add_argument('--render',action='store', type=bool, default=False, dest='render')
+    
     return parser
 
 def PostprocessOpts(opts): 
