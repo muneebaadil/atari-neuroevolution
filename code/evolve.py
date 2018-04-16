@@ -46,6 +46,8 @@ def GetParser():
     parser.add_argument('--num_episodes',action='store', type=int, default=1, dest='num_episodes')
 
     # logging/verbosity parameters.. 
+    parser.add_argument('--hof_maxsize',action='store', type=int, default=1, dest='hof_maxsize')
+
     parser.add_argument('--render',action='store', type=bool, default=False, dest='render')
     parser.add_argument('--verbose',action='store', type=bool, default=False, dest='verbose')
     parser.add_argument('--exp_root_dir',action='store', type=str, default='../experiments', dest='exp_root_dir')
@@ -87,7 +89,8 @@ def InitSetup(opts):
     #cross-over, mutation and selection strategy.. 
     toolbox.register("evaluate", Evaluate, opts=opts)
     toolbox.register("mate", getattr(tools, opts.crossover_type))
-    toolbox.register("mutate", getattr(tools, opts.mutate_type))
+    toolbox.register("mutate", getattr(tools, opts.mutate_type), indpb = opts.mutate_indpb, 
+                    **opts.mutate_args)
     toolbox.register("select", getattr(tools, opts.select_type))
 
     #configuring logging
@@ -96,16 +99,18 @@ def InitSetup(opts):
     stats.register("min", np.min)
     stats.register("max", np.max)
 
-    logbook = tools.Logbook()
+    logbook, hof = tools.Logbook(), tools.HallOfFame(maxsize=opts.hof_maxsize)
+    logbook.header = ['gen','evals','avg','min','max']
 
     #directory for experiments/checkpoints
     if not os.path.exists(opts.exp_dir):
         os.makedirs(opts.exp_dir)
+    WriteConfigToFile(os.path.join(opts.exp_dir,'config.txt'), vars(opts))
 
-    return creator, toolbox, stats, logbook
+    return creator, toolbox, stats, logbook, hof
 
 def Evolve(opts): 
-    creator, toolbox, stats, logbook = InitSetup(opts)
+    creator, toolbox, stats, logbook, hof = InitSetup(opts)
 
     #initial population..
     pop = toolbox.population_init()    
@@ -115,9 +120,19 @@ def Evolve(opts):
     
     #evolving..
     for curr_gen in xrange(opts.num_gens): 
+
+        #updating statistics..
+        hof.update(pop)
         record = stats.compile(pop)
         logbook.record(gen=curr_gen, evals=len(fitnesses), **record)
 
+        #verbosity 
+        print_str = 'gen = {}, evals = {}'.format(curr_gen, len(fitnesses))
+        for k in ['avg','min','max']: 
+            print_str += ', {} = {}'.format(k, record[k])
+        print print_str
+
+        #actual evolution..
         parents = toolbox.select(pop, k=opts.num_select, **opts.select_args)
         offsprings = algorithms.varAnd(parents, toolbox, cxpb=opts.crossover_prob, 
                                         mutpb=opts.mutate_prob)
@@ -126,6 +141,20 @@ def Evolve(opts):
             ind.fitness.values = fit 
 
         pop = offsprings
+
+    curr_gen += 1 
+    #updating statistics for final generation..
+    hof.update(pop)
+    record = stats.compile(pop)
+    logbook.record(gen=curr_gen, evals=len(fitnesses), **record)
+
+    #verbosity 
+    print_str = 'gen = {}, evals = {}'.format(curr_gen, len(fitnesses))
+    for k in ['avg','min','max']: 
+        print_str += ', {} = {}'.format(k, record[k])
+    print print_str
+
+    PlotLog(logbook, opts.game_name, os.path.join(opts.exp_dir, 'plot.png'))
     
 if __name__=='__main__': 
     parser = GetParser()

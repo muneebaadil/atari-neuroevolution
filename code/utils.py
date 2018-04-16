@@ -1,7 +1,7 @@
 import numpy as np 
 from array import array 
 from itertools import izip 
-import matplotlib.pyplot as plt 
+import matplotlib.pyplot as plt
 
 import pdb
 
@@ -54,5 +54,27 @@ def ForwardPass(net, input):
     
     return output 
 
-def PlotLog(log): 
-    pdb.set_trace()
+def WriteConfigToFile(fpath, optsDict): 
+    fobj = open(fpath, 'w')
+
+    for k,v in optsDict.items(): 
+        fobj.write('{} >> {}\n'.format(str(k), str(v)))
+    fobj.close()
+
+def PlotLog(log, game_name, filename): 
+    plt.style.use('ggplot')
+
+    gen = log.select('gen')
+    fig,ax=plt.subplots()
+    
+    for att in log.header: 
+        if att not in ['gen','evals']: 
+            att_ = log.select(att)
+            ax.plot(gen,att_,label=att)
+    
+    ax.legend()
+    plt.xlabel('Generations')
+    plt.ylabel('Fitness Score')
+    plt.title(game_name)
+
+    plt.savefig(filename)
