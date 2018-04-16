@@ -18,7 +18,7 @@ def GetParser():
     parser.add_argument('--input_dim',action='store', type=str, default='210x160x3', dest='input_dim')
     parser.add_argument('--num_hidden',action='store', type=int, default=6, dest='num_hidden')
     parser.add_argument('--num_actions',action='store', type=int, default=6, dest='num_actions')
-    parser.add_argument('--init_func',action='store', type=str, default='normal', dest='init_func')
+    parser.add_argument('--init_func',action='store', type=str, default='gauss', dest='init_func')
     parser.add_argument('--init_args',action='store', type=str, default='mu=0,sigma=1', dest='init_args')
 
     #input/preprocess arguments
@@ -72,8 +72,7 @@ def PostprocessOpts(opts):
     opts.exp_dir = os.path.join(opts.exp_root_dir, opts.exp_name)
     return 
 
-def Evolve(opts): 
-    print '[Info]: Initializing setup..'
+def InitSetup(opts):
     #base class for individuals and fitness function
     creator.create("FitnessMax", base.Fitness, weights=(1.,))
     creator.create("Network", array, fitness=creator.FitnessMax, typecode='f')
@@ -88,8 +87,8 @@ def Evolve(opts):
     #cross-over, mutation and selection strategy.. 
     toolbox.register("evaluate", Evaluate, opts=opts)
     toolbox.register("mate", getattr(tools, opts.crossover_type))
-    toolbox.register("mutate", getattr(tools, opts.mutate_type), indpb=opts.mutate_indpb, **opts.mutate_args)
-    toolbox.register("select", getattr(tools, opts.select_type), **opts.select_args)
+    toolbox.register("mutate", getattr(tools, opts.mutate_type))
+    toolbox.register("select", getattr(tools, opts.select_type))
 
     #configuring logging
     stats = tools.Statistics(lambda ind: ind.fitness.values)
@@ -97,17 +96,36 @@ def Evolve(opts):
     stats.register("min", np.min)
     stats.register("max", np.max)
 
+    logbook = tools.Logbook()
+
     #directory for experiments/checkpoints
     if not os.path.exists(opts.exp_dir):
         os.makedirs(opts.exp_dir)
 
-    #initial population generation and evolving.. 
-    print '[Info]: Generating initial population..'
-    pop = toolbox.population_init()
+    return creator, toolbox, stats, logbook
 
-    print '[Info]: Optimization start!'
-    final_pop, log = algorithms.eaSimple(pop, toolbox, cxpb=opts.crossover_prob, mutpb=opts.mutate_prob, 
-                                        ngen=opts.num_gens, stats=stats,verbose=opts.verbose)
+def Evolve(opts): 
+    creator, toolbox, stats, logbook = InitSetup(opts)
+
+    #initial population..
+    pop = toolbox.population_init()    
+    fitnesses = toolbox.map(toolbox.evaluate, pop)
+    for ind, fit in izip(pop, fitnesses): 
+        ind.fitness.values = fit 
+    
+    #evolving..
+    for curr_gen in xrange(opts.num_gens): 
+        record = stats.compile(pop)
+        logbook.record(gen=curr_gen, evals=len(fitnesses), **record)
+
+        parents = toolbox.select(pop, k=opts.num_select, **opts.select_args)
+        offsprings = algorithms.varAnd(parents, toolbox, cxpb=opts.crossover_prob, 
+                                        mutpb=opts.mutate_prob)
+        fitnesses = toolbox.map(toolbox.evaluate, offsprings)
+        for ind, fit in izip(offsprings, fitnesses): 
+            ind.fitness.values = fit 
+
+        pop = offsprings
     
 if __name__=='__main__': 
     parser = GetParser()
