@@ -1,6 +1,9 @@
 import numpy as np 
 from array import array 
 from itertools import izip 
+import matplotlib.pyplot as plt 
+
+import pdb
 
 def Ind2Network(ind, opts):
     """Returns a neural network representation of the chromosome""" 
@@ -35,8 +38,21 @@ def ForwardPass(net, input):
     
     weights, biases = net['weights'], net['biases']
 
-    for w,b in izip(weights, biases): 
-        input = w.dot(input) + b
-        input[input < 0] = 0 #relu activation
+    num_layers = len(weights)
 
-    return input 
+    for i, (w,b) in enumerate(izip(weights, biases)): 
+        input = w.dot(input) + b
+
+        if i != num_layers -1: #if not last layer..
+            input[input < 0] = 0 #relu activation
+
+    #softmax layer 
+    output_ = input[:,0] 
+    output_ -= output_.max()
+    output_ = np.exp(output_)
+    output = output_ / np.sum(output_)
+    
+    return output 
+
+def PlotLog(log): 
+    pdb.set_trace()

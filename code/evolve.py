@@ -3,6 +3,8 @@ import argparse
 from deap import base, creator, tools, algorithms
 from operator import mul, add
 import random
+import os
+from time import gmtime, strftime
 
 from utils import * 
 from evaluate import Evaluate
@@ -16,6 +18,8 @@ def GetParser():
     parser.add_argument('--input_dim',action='store', type=str, default='210x160x3', dest='input_dim')
     parser.add_argument('--num_hidden',action='store', type=int, default=6, dest='num_hidden')
     parser.add_argument('--num_actions',action='store', type=int, default=6, dest='num_actions')
+    parser.add_argument('--init_func',action='store', type=str, default='normal', dest='init_func')
+    parser.add_argument('--init_args',action='store', type=str, default='mu=0,sigma=1', dest='init_args')
 
     #optimization parameters
     parser.add_argument('--population_size',action='store',type=int,default=1, dest='population_size')
@@ -40,6 +44,9 @@ def GetParser():
     # logging/verbosity parameters.. 
     parser.add_argument('--render',action='store', type=bool, default=False, dest='render')
     parser.add_argument('--verbose',action='store', type=bool, default=False, dest='verbose')
+    parser.add_argument('--exp_root_dir',action='store', type=str, default='../experiments', dest='exp_root_dir')
+    parser.add_argument('--exp_name',action='store', type=str, default=strftime("%Y-%m-%d__%H-%M-%S",gmtime()),
+                         dest='exp_name')
 
     # parser.add_argument('--resume',action='store', type=bool, default=False, dest='resume')
 
@@ -55,6 +62,9 @@ def PostprocessOpts(opts):
 
     opts.mutate_args = {x.split('=')[0]: int(x.split('=')[1]) for x in opts.mutate_args.split(',')}
     opts.select_args = {x.split('=')[0]: int(x.split('=')[1]) for x in opts.select_args.split(',')}
+    opts.init_args = {x.split('=')[0]: float(x.split('=')[1]) for x in opts.init_args.split(',')}
+
+    opts.exp_dir = os.path.join(opts.exp_root_dir, opts.exp_name)
     return 
 
 def Evolve(opts): 
@@ -65,7 +75,7 @@ def Evolve(opts):
 
     #registering initialization functions and game environment..
     toolbox = base.Toolbox()
-    toolbox.register("neuron_init", random.random)
+    toolbox.register("neuron_init", getattr(random, opts.init_func), **opts.init_args)
     toolbox.register("network_init", tools.initRepeat, creator.Network, 
                                 toolbox.neuron_init, n=opts.num_params)
     toolbox.register("population_init", tools.initRepeat, list, toolbox.network_init, n=opts.population_size)
@@ -82,6 +92,10 @@ def Evolve(opts):
     stats.register("min", np.min)
     stats.register("max", np.max)
 
+    #directory for experiments/checkpoints
+    if not os.path.exists(opts.exp_dir):
+        os.makedirs(opts.exp_dir)
+
     #initial population generation and evolving.. 
     print '[Info]: Generating initial population..'
     pop = toolbox.population_init()
@@ -89,7 +103,7 @@ def Evolve(opts):
     print '[Info]: Optimization start!'
     final_pop, log = algorithms.eaSimple(pop, toolbox, cxpb=opts.crossover_prob, mutpb=opts.mutate_prob, 
                                         ngen=opts.num_gens, stats=stats,verbose=opts.verbose)
-
+    
 if __name__=='__main__': 
     parser = GetParser()
     opts = parser.parse_args()
