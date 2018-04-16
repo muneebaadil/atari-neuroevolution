@@ -21,6 +21,10 @@ def GetParser():
     parser.add_argument('--init_func',action='store', type=str, default='normal', dest='init_func')
     parser.add_argument('--init_args',action='store', type=str, default='mu=0,sigma=1', dest='init_args')
 
+    #input/preprocess arguments
+    parser.add_argument('--preprocess',action='store', type=str, default='FramesDiff', dest='preprocess')
+    parser.add_argument('--preprocess_args',action='store', type=str, default='scale=255.', dest='preprocess_args')
+
     #optimization parameters
     parser.add_argument('--population_size',action='store',type=int,default=1, dest='population_size')
     parser.add_argument('--num_gens',action='store',type=int,default=10, dest='num_gens')
@@ -63,6 +67,7 @@ def PostprocessOpts(opts):
     opts.mutate_args = {x.split('=')[0]: int(x.split('=')[1]) for x in opts.mutate_args.split(',')}
     opts.select_args = {x.split('=')[0]: int(x.split('=')[1]) for x in opts.select_args.split(',')}
     opts.init_args = {x.split('=')[0]: float(x.split('=')[1]) for x in opts.init_args.split(',')}
+    opts.preprocess_args = {x.split('=')[0]: float(x.split('=')[1]) for x in opts.preprocess_args.split(',')}
 
     opts.exp_dir = os.path.join(opts.exp_root_dir, opts.exp_name)
     return 
