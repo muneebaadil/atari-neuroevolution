@@ -5,6 +5,7 @@ from operator import mul, add
 import random
 import os
 from time import gmtime, strftime
+import pickle 
 
 from utils import * 
 from evaluate import Evaluate
@@ -50,7 +51,7 @@ def GetParser():
     parser.add_argument('--exp_root_dir',action='store', type=str, default='../experiments', dest='exp_root_dir')
     parser.add_argument('--exp_name',action='store', type=str, default=strftime("%Y-%m-%d__%H-%M-%S",gmtime()),
                          dest='exp_name')
-    parser.add_argument('--save_every',action='store', type=int, default=5, dest='save_every')
+    parser.add_argument('--save_every',action='store', type=int, default=1, dest='save_every')
     parser.add_argument('--hof_maxsize',action='store', type=int, default=1, dest='hof_maxsize')
     
     #misc
@@ -99,19 +100,34 @@ def InitSetup(opts):
     stats.register("min", np.min)
     stats.register("max", np.max)
 
-    logbook, hof = tools.Logbook(), tools.HallOfFame(maxsize=opts.hof_maxsize)
-    logbook.header = ['gen','evals','avg','min','max']
+    if opts.load is not None: #loading a checkpoint
+        print 'loading checkpoint from {}..'.format(opts.load)
+        with open(opts.load) as ckpt_file: 
+            ckpt = pickle.load(ckpt_file)
+        
+        pop = ckpt['pop']
+        logbook = ckpt['logbook']
+        hof = ckpt['hof']
+        start_gen = ckpt['gen']
+        random.setstate(ckpt['randstate'])
+        
+    else: #initializing from scratch..
+        print 'initializing setup from scratch..'
+        logbook, hof = tools.Logbook(), tools.HallOfFame(maxsize=opts.hof_maxsize)
+        logbook.header = ['gen','evals','avg','min','max']
+
+        #initial population
+        pop = toolbox.population_init()
+        start_gen = 0
 
     #directory for experiments/checkpoints
     if not os.path.exists(opts.exp_dir):
         os.makedirs(opts.exp_dir)
     WriteConfigToFile(os.path.join(opts.exp_dir,'config.txt'), vars(opts))
 
-    return creator, toolbox, stats, logbook, hof
+    return creator, toolbox, stats, logbook, hof, pop, start_gen
 
 def Evolve(opts): 
-    creator, toolbox, stats, logbook, hof = InitSetup(opts)
-
     def _UpdateStats(pop, curr_gen, evals, hof, stats, logbook): 
         hof.update(pop)
         record = stats.compile(pop)
@@ -124,17 +140,37 @@ def Evolve(opts):
             print_str += ', {} = {}'.format(k, record[k])
         print print_str
 
-    #initial population..
-    pop = toolbox.population_init()    
+    def _SaveCkpts(exp_dir, num_ckpts, gen, pop, hof, logbook): 
+
+        if not os.path.exists(os.path.join(exp_dir,'checkpoints')): 
+            os.makedirs(os.path.join(exp_dir,'checkpoints'))
+        
+        filename = os.path.join(exp_dir,'checkpoints','ckpt_{}.pkl'.format(num_ckpts))
+        to_save = {'pop':pop, 'hof':hof,'gen':gen, 'logbook':logbook, 'randstate':random.getstate()}
+
+        with open(filename,'w') as ckpt_file:
+            pickle.dump(to_save, ckpt_file)
+
+
+    #initial setup and population..
+    creator, toolbox, stats, logbook, hof, pop, start_gen = InitSetup(opts)
+
     fitnesses = toolbox.map(toolbox.evaluate, pop)
     for ind, fit in izip(pop, fitnesses): 
         ind.fitness.values = fit 
     
+    num_ckpts = 0
     #evolving..
-    for curr_gen in xrange(opts.num_gens): 
+    for curr_gen in xrange(start_gen, opts.num_gens): 
 
+        #stats update and verbosity
         record = _UpdateStats(pop, curr_gen, len(fitnesses), hof, stats, logbook)
         _Verbose(curr_gen, len(fitnesses), record)
+        
+        #optional checkpointing
+        if curr_gen % opts.save_every == 0: 
+            num_ckpts += 1 
+            _SaveCkpts(opts.exp_dir, num_ckpts, curr_gen, pop, hof, logbook)
 
         #actual evolution..
         parents = toolbox.select(pop, k=opts.num_select, **opts.select_args)
@@ -147,9 +183,15 @@ def Evolve(opts):
         pop = offsprings
 
     curr_gen += 1 
+    #final stats update and verbosity
     record = _UpdateStats(pop, curr_gen, len(fitnesses), hof, stats, logbook)
     _Verbose(curr_gen, len(fitnesses), record)
+    
+    #final checkpoint
+    num_ckpts += 1 
+    _SaveCkpts(opts.exp_dir, num_ckpts, curr_gen, pop, hof, logbook)
 
+    #final plotting
     PlotLog(logbook, opts.game_name, os.path.join(opts.exp_dir, 'plot.png'))
     
 if __name__=='__main__': 
