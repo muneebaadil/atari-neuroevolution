@@ -112,6 +112,18 @@ def InitSetup(opts):
 def Evolve(opts): 
     creator, toolbox, stats, logbook, hof = InitSetup(opts)
 
+    def _UpdateStats(pop, curr_gen, evals, hof, stats, logbook): 
+        hof.update(pop)
+        record = stats.compile(pop)
+        logbook.record(gen=curr_gen, evals=evals, **record)
+        return record
+
+    def _Verbose(curr_gen, evals, record): 
+        print_str = 'gen = {}, evals = {}'.format(curr_gen, evals)
+        for k in ['avg','min','max']: 
+            print_str += ', {} = {}'.format(k, record[k])
+        print print_str
+
     #initial population..
     pop = toolbox.population_init()    
     fitnesses = toolbox.map(toolbox.evaluate, pop)
@@ -121,16 +133,8 @@ def Evolve(opts):
     #evolving..
     for curr_gen in xrange(opts.num_gens): 
 
-        #updating statistics..
-        hof.update(pop)
-        record = stats.compile(pop)
-        logbook.record(gen=curr_gen, evals=len(fitnesses), **record)
-
-        #verbosity 
-        print_str = 'gen = {}, evals = {}'.format(curr_gen, len(fitnesses))
-        for k in ['avg','min','max']: 
-            print_str += ', {} = {}'.format(k, record[k])
-        print print_str
+        record = _UpdateStats(pop, curr_gen, len(fitnesses), hof, stats, logbook)
+        _Verbose(curr_gen, len(fitnesses), record)
 
         #actual evolution..
         parents = toolbox.select(pop, k=opts.num_select, **opts.select_args)
@@ -143,16 +147,8 @@ def Evolve(opts):
         pop = offsprings
 
     curr_gen += 1 
-    #updating statistics for final generation..
-    hof.update(pop)
-    record = stats.compile(pop)
-    logbook.record(gen=curr_gen, evals=len(fitnesses), **record)
-
-    #verbosity 
-    print_str = 'gen = {}, evals = {}'.format(curr_gen, len(fitnesses))
-    for k in ['avg','min','max']: 
-        print_str += ', {} = {}'.format(k, record[k])
-    print print_str
+    record = _UpdateStats(pop, curr_gen, len(fitnesses), hof, stats, logbook)
+    _Verbose(curr_gen, len(fitnesses), record)
 
     PlotLog(logbook, opts.game_name, os.path.join(opts.exp_dir, 'plot.png'))
     
