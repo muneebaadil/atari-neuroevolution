@@ -4,8 +4,9 @@ from deap import base, creator, tools, algorithms
 from operator import mul, add
 import random
 import os
-from time import gmtime, strftime
+from time import gmtime, strftime, time 
 import pickle 
+import multiprocessing
 
 from utils import * 
 from evaluate import Evaluate
@@ -51,7 +52,7 @@ def GetParser():
     parser.add_argument('--exp_root_dir',action='store', type=str, default='../experiments', dest='exp_root_dir')
     parser.add_argument('--exp_name',action='store', type=str, default=strftime("%Y-%m-%d__%H-%M-%S",gmtime()),
                          dest='exp_name')
-    parser.add_argument('--save_every',action='store', type=int, default=1, dest='save_every')
+    parser.add_argument('--save_every',action='store', type=int, default=-1, dest='save_every')
     parser.add_argument('--hof_maxsize',action='store', type=int, default=1, dest='hof_maxsize')
     
     #misc
@@ -80,8 +81,14 @@ def InitSetup(opts):
     creator.create("FitnessMax", base.Fitness, weights=(1.,))
     creator.create("Network", array, fitness=creator.FitnessMax, typecode='f')
 
-    #registering initialization functions and game environment..
+    
     toolbox = base.Toolbox()
+
+    #distributed settings
+    pool = multiprocessing.Pool()
+    toolbox.register("map", pool.map)
+
+    #registering initialization functions and game environment..
     toolbox.register("neuron_init", getattr(random, opts.init_func), **opts.init_args)
     toolbox.register("network_init", tools.initRepeat, creator.Network, 
                                 toolbox.neuron_init, n=opts.num_params)
@@ -134,10 +141,11 @@ def Evolve(opts):
         logbook.record(gen=curr_gen, evals=evals, **record)
         return record
 
-    def _Verbose(curr_gen, evals, record): 
+    def _Verbose(curr_gen, evals, record, last_time): 
         print_str = 'gen = {}, evals = {}'.format(curr_gen, evals)
         for k in ['avg','min','max']: 
             print_str += ', {} = {}'.format(k, record[k])
+        print_str += ', time taken = {}'.format(time()-last_time)
         print print_str
 
     def _SaveCkpts(exp_dir, num_ckpts, gen, pop, hof, logbook): 
@@ -151,9 +159,9 @@ def Evolve(opts):
         with open(filename,'w') as ckpt_file:
             pickle.dump(to_save, ckpt_file)
 
-
     #initial setup and population..
     creator, toolbox, stats, logbook, hof, pop, start_gen = InitSetup(opts)
+    last_time = time()
 
     fitnesses = toolbox.map(toolbox.evaluate, pop)
     for ind, fit in izip(pop, fitnesses): 
@@ -165,12 +173,13 @@ def Evolve(opts):
 
         #stats update and verbosity
         record = _UpdateStats(pop, curr_gen, len(fitnesses), hof, stats, logbook)
-        _Verbose(curr_gen, len(fitnesses), record)
+        _Verbose(curr_gen, len(fitnesses), record, last_time)
         
         #optional checkpointing
-        if curr_gen % opts.save_every == 0: 
+        if (opts.save_every > 0) and (curr_gen % opts.save_every == 0): 
             num_ckpts += 1 
             _SaveCkpts(opts.exp_dir, num_ckpts, curr_gen, pop, hof, logbook)
+        last_time = time()
 
         #actual evolution..
         parents = toolbox.select(pop, k=opts.num_select, **opts.select_args)
@@ -185,7 +194,7 @@ def Evolve(opts):
     curr_gen += 1 
     #final stats update and verbosity
     record = _UpdateStats(pop, curr_gen, len(fitnesses), hof, stats, logbook)
-    _Verbose(curr_gen, len(fitnesses), record)
+    _Verbose(curr_gen, len(fitnesses), record, last_time)
     
     #final checkpoint
     num_ckpts += 1 
