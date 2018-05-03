@@ -41,23 +41,23 @@ def GetParser():
     
     parser.add_argument('--crossover_type',action='store',type=str,default='cxTwoPoint',
                          dest='crossover_type')
-    parser.add_argument('--crossover_prob', action='store', type=float, default=.9,
+    parser.add_argument('--crossover_prob', action='store', type=float, default=0.,
                          dest='crossover_prob')
 
     parser.add_argument('--mutate_type', action='store', type=str, default='mutGaussian',
                          dest='mutate_type')
-    parser.add_argument('--mutate_args',action='store',type=str,default='mu=1,sigma=1',
-                         dest='mutate_args')
-    parser.add_argument('--mutate_prob',action='store',type=float,default=.1, 
+    parser.add_argument('--mutate_args',action='store',type=str,
+                        default='mu=0,sigma=0.005',dest='mutate_args')
+    parser.add_argument('--mutate_prob',action='store',type=float,default=1., 
                         dest='mutate_prob')
     parser.add_argument('--mutate_indpb',action='store',type=float,default=.5, 
                         dest='mutate_indpb')
 
     parser.add_argument('--select_type',action='store', type=str,
-                         default='selTournament', dest='select_type')
+                         default='selBest', dest='select_type')
     parser.add_argument('--num_select',action='store', type=int, default=2,
                          dest='num_select')
-    parser.add_argument('--select_args',action='store', type=str, default='tournsize=2',
+    parser.add_argument('--select_args',action='store', type=str, default='',
                          dest='select_args')
     
     #evaluation parameters
@@ -77,6 +77,11 @@ def GetParser():
     parser.add_argument('--hof_maxsize',action='store', type=int, default=1, 
                         dest='hof_maxsize')
     
+    #imperfection settings
+    parser.add_argument('--change_game_every',action='store', type=int, default=300, 
+                        dest='change_game_every', help='number of episodes to change \
+                        game after')
+
     #misc
     parser.add_argument('--render',action='store', type=bool, default=False, 
                         dest='render')
@@ -91,15 +96,19 @@ def PostprocessOpts(opts):
     opts.num_biases = reduce(add, opts.dims[1:], 0)
     opts.num_params = opts.num_weights + opts.num_biases
 
-    opts.mutate_args = {x.split('=')[0]: int(x.split('=')[1]) \
-                        for x in opts.mutate_args.split(',')}
+    
+    opts.mutate_args = {x.split('=')[0]: float(x.split('=')[1]) \
+                        for x in opts.mutate_args.split(',')} \
+                        if opts.mutate_args!='' else {}
     opts.select_args = {x.split('=')[0]: int(x.split('=')[1]) \
-                        for x in opts.select_args.split(',')}
+                        for x in opts.select_args.split(',')} \
+                        if opts.select_args!='' else {}
     opts.init_args = {x.split('=')[0]: float(x.split('=')[1]) \
-                        for x in opts.init_args.split(',')}
+                        for x in opts.init_args.split(',')} \
+                        if opts.init_args != '' else {}
     opts.preprocess_args = {x.split('=')[0]: float(x.split('=')[1])\
-                             for x in opts.preprocess_args.split(',')}
-
+                             for x in opts.preprocess_args.split(',')} \
+                             if opts.preprocess_args != '' else {}
     opts.exp_dir = os.path.join(opts.exp_root_dir, opts.exp_name)
     return 
 
@@ -208,6 +217,10 @@ def Evolve(opts):
         if (opts.save_every > 0) and (curr_gen % opts.save_every == 0): 
             num_ckpts += 1 
             _SaveCkpts(opts.exp_dir, num_ckpts, curr_gen, pop, hof, logbook)
+
+            #plotting
+            PlotLog(logbook, opts.game_name, os.path.join(opts.exp_dir, 'plot.png'))
+
         last_time = time()
 
         #actual evolution..
@@ -228,9 +241,6 @@ def Evolve(opts):
     #final checkpoint
     num_ckpts += 1 
     _SaveCkpts(opts.exp_dir, num_ckpts, curr_gen, pop, hof, logbook)
-
-    #final plotting
-    PlotLog(logbook, opts.game_name, os.path.join(opts.exp_dir, 'plot.png'))
     
 if __name__=='__main__': 
     parser = GetParser()
