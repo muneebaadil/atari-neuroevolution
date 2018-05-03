@@ -1,5 +1,4 @@
 from array import array 
-import numpy as np 
 import argparse
 from deap import base, creator, tools, algorithms
 from operator import mul, add
@@ -80,13 +79,12 @@ def GetParser():
     
     #imperfection settings
     parser.add_argument('--change_game_every',action='store', type=int, default=300, 
-                        dest='change_game_every', help='number of generations to change \
+                        dest='change_game_every', help='number of episodes to change \
                         game after')
+
     #misc
     parser.add_argument('--render',action='store', type=bool, default=False, 
                         dest='render')
-    parser.add_argument('--mutiprocess',action='store', type=bool, default=True, 
-                        dest='multiprocess')
     
     return parser
 
@@ -115,24 +113,20 @@ def PostprocessOpts(opts):
     return 
 
 def InitSetup(opts):
-
-    def _InitNetwork(): 
-        return np.random.normal(size=(opts.num_params,))
-
     #base class for individuals and fitness function
     creator.create("FitnessMax", base.Fitness, weights=(1.,))
-    creator.create("Network", np.ndarray, fitness=creator.FitnessMax, typecode='f')
+    creator.create("Network", array, fitness=creator.FitnessMax, typecode='f')
 
     toolbox = base.Toolbox()
 
     #distributed settings
-    if opts.multiprocess: 
-        pool = multiprocessing.Pool()
-        toolbox.register("map", pool.map)
+    pool = multiprocessing.Pool()
+    toolbox.register("map", pool.map)
 
     #registering initialization functions and game environment..
-    toolbox.register("network_init", tools.initRepeat, creator.Network, 
-                    _InitNetwork,n=1)
+    #toolbox.register("neuron_init", getattr(random, opts.init_func), **opts.init_args)
+    toolbox.register("network_init", creator.Network, array('f',
+                                    np.random.normal(size=(opts.num_params))))
     toolbox.register("population_init", tools.initRepeat, list, toolbox.network_init,
                      n=opts.population_size)
 
@@ -162,8 +156,7 @@ def InitSetup(opts):
         
     else: #initializing from scratch..
         print 'initializing setup from scratch..'
-        logbook, hof = tools.Logbook(), tools.HallOfFame(maxsize=opts.hof_maxsize,
-                                                         similar=np.array_equal)
+        logbook, hof = tools.Logbook(), tools.HallOfFame(maxsize=opts.hof_maxsize)
         logbook.header = ['gen','evals','avg','min','max']
 
         #initial population
@@ -196,17 +189,12 @@ def Evolve(opts):
         if not os.path.exists(os.path.join(exp_dir,'checkpoints')): 
             os.makedirs(os.path.join(exp_dir,'checkpoints'))
         
-        ckpt_dir = os.path.join(exp_dir,'checkpoints','ckpt_{}'.format(num_ckpts))
-        if not os.path.exists(ckpt_dir): 
-            os.makedirs(os.path.join(ckpt_dir))
-        
+        filename = os.path.join(exp_dir,'checkpoints','ckpt_{}.pkl'.format(num_ckpts))
         to_save = {'pop':pop, 'hof':hof,'gen':gen, 'logbook':logbook, 
                     'randstate':random.getstate()}
 
-        for k,v in to_save.items(): 
-            filename = os.path.join(ckpt_dir, '{}.pkl'.format(k))
-            with open(filename,'w') as ckpt_file:
-                pickle.dump(v, ckpt_file)
+        with open(filename,'w') as ckpt_file:
+            pickle.dump(to_save, ckpt_file)
 
     #initial setup and population..
     creator, toolbox, stats, logbook, hof, pop, start_gen = InitSetup(opts)
@@ -217,8 +205,7 @@ def Evolve(opts):
         ind.fitness.values = fit 
     
     num_ckpts = 0
-    #evolving..  
-    pdb.set_trace()  
+    #evolving..
     for curr_gen in xrange(start_gen, opts.num_gens): 
 
         #stats update and verbosity
