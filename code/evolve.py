@@ -79,7 +79,7 @@ def GetParser():
     
     #imperfection settings
     parser.add_argument('--change_game_every',action='store', type=int, default=300, 
-                        dest='change_game_every', help='number of episodes to change \
+                        dest='change_game_every', help='number of generations to change \
                         game after')
 
     #misc
@@ -190,12 +190,17 @@ def Evolve(opts):
         if not os.path.exists(os.path.join(exp_dir,'checkpoints')): 
             os.makedirs(os.path.join(exp_dir,'checkpoints'))
         
-        filename = os.path.join(exp_dir,'checkpoints','ckpt_{}.pkl'.format(num_ckpts))
+        ckpt_dir = os.path.join(exp_dir,'checkpoints','ckpt_{}'.format(num_ckpts))
+        if not os.path.exists(ckpt_dir): 
+            os.makedirs(os.path.join(ckpt_dir))
+        
         to_save = {'pop':pop, 'hof':hof,'gen':gen, 'logbook':logbook, 
                     'randstate':random.getstate()}
 
-        with open(filename,'w') as ckpt_file:
-            pickle.dump(to_save, ckpt_file)
+        for k,v in to_save.items(): 
+            filename = os.path.join(ckpt_dir, '{}.pkl'.format(k))
+            with open(filename,'w') as ckpt_file:
+                pickle.dump(v, ckpt_file)
 
     #initial setup and population..
     creator, toolbox, stats, logbook, hof, pop, start_gen = InitSetup(opts)
