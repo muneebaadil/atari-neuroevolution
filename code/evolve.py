@@ -77,11 +77,6 @@ def GetParser():
     parser.add_argument('--hof_maxsize',action='store', type=int, default=1, 
                         dest='hof_maxsize')
     
-    #imperfection settings
-    parser.add_argument('--change_game_every',action='store', type=int, default=300, 
-                        dest='change_game_every', help='number of episodes to change \
-                        game after')
-
     #misc
     parser.add_argument('--render',action='store', type=bool, default=False, 
                         dest='render')
@@ -224,14 +219,13 @@ def Evolve(opts):
         last_time = time()
 
         #actual evolution..
-        parents = toolbox.select(pop, k=opts.num_select, **opts.select_args)
-        offsprings = algorithms.varAnd(parents, toolbox, cxpb=opts.crossover_prob, 
+        pop = toolbox.select(pop, k=opts.num_select, **opts.select_args)
+        pop = algorithms.varAnd(pop, toolbox, cxpb=opts.crossover_prob, 
                                         mutpb=opts.mutate_prob)
-        fitnesses = toolbox.map(toolbox.evaluate, offsprings)
-        for ind, fit in izip(offsprings, fitnesses): 
+        pdb.set_trace()
+        fitnesses = toolbox.map(toolbox.evaluate, pop)
+        for ind, fit in izip(pop, fitnesses): 
             ind.fitness.values = fit 
-
-        pop = offsprings
 
     curr_gen += 1 
     #final stats update and verbosity
