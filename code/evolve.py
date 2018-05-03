@@ -82,7 +82,6 @@ def GetParser():
     parser.add_argument('--change_game_every',action='store', type=int, default=300, 
                         dest='change_game_every', help='number of generations to change \
                         game after')
-
     #misc
     parser.add_argument('--render',action='store', type=bool, default=False, 
                         dest='render')
@@ -165,9 +164,7 @@ def InitSetup(opts):
         logbook.header = ['gen','evals','avg','min','max']
 
         #initial population
-        print 'generating population..'
         pop = toolbox.population_init()
-        print 'population done..'
         start_gen = 0
 
     #directory for experiments/checkpoints
@@ -217,8 +214,8 @@ def Evolve(opts):
         ind.fitness.values = fit 
     
     num_ckpts = 0
-    #evolving..
-
+    #evolving..  
+    pdb.set_trace()  
     for curr_gen in xrange(start_gen, opts.num_gens): 
 
         #stats update and verbosity

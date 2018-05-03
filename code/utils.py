@@ -8,7 +8,7 @@ import pdb
 def Ind2Network(ind, opts):
     """Returns a neural network representation of the chromosome""" 
 
-    ind_ = np.array(ind)
+    ind = np.array(ind[0])
     weights = []
     biases = []
 
