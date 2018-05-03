@@ -16,7 +16,7 @@ def Ind2Network(ind, opts):
     for new_dim, prev_dim in izip(opts.dims[1:], opts.dims[:-1]): 
         inc = int(new_dim * prev_dim)
 
-        weight = np.array(ind[curr_idx:curr_idx+inc]).reshape((new_dim, prev_dim))
+        weight = ind[curr_idx:curr_idx+inc].reshape((new_dim, prev_dim))
         weights.append(weight)
 
         curr_idx += inc 
@@ -24,7 +24,7 @@ def Ind2Network(ind, opts):
     for new_dim, prev_dim in izip(opts.dims[1:], opts.dims[:-1]): 
         inc = int(new_dim)
 
-        bias = np.array(ind[curr_idx:curr_idx+inc]).reshape((new_dim, 1))
+        bias = ind[curr_idx:curr_idx+inc].reshape((new_dim, 1))
         biases.append(bias)
 
         curr_idx += inc
