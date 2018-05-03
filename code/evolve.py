@@ -1,4 +1,5 @@
 from array import array 
+import numpy as np 
 import argparse
 from deap import base, creator, tools, algorithms
 from operator import mul, add
@@ -113,11 +114,14 @@ def PostprocessOpts(opts):
     return 
 
 def InitSetup(opts):
+
+    def _InitNetwork(): 
+        return np.random.normal(size=(opts.num_params,))
+
     #base class for individuals and fitness function
     creator.create("FitnessMax", base.Fitness, weights=(1.,))
-    creator.create("Network", array, fitness=creator.FitnessMax, typecode='f')
+    creator.create("Network", np.ndarray, fitness=creator.FitnessMax, typecode='f')
 
-    
     toolbox = base.Toolbox()
 
     #distributed settings
@@ -125,9 +129,8 @@ def InitSetup(opts):
     toolbox.register("map", pool.map)
 
     #registering initialization functions and game environment..
-    toolbox.register("neuron_init", getattr(random, opts.init_func), **opts.init_args)
     toolbox.register("network_init", tools.initRepeat, creator.Network, 
-                                toolbox.neuron_init, n=opts.num_params)
+                    _InitNetwork,n=1)
     toolbox.register("population_init", tools.initRepeat, list, toolbox.network_init,
                      n=opts.population_size)
 
@@ -157,11 +160,14 @@ def InitSetup(opts):
         
     else: #initializing from scratch..
         print 'initializing setup from scratch..'
-        logbook, hof = tools.Logbook(), tools.HallOfFame(maxsize=opts.hof_maxsize)
+        logbook, hof = tools.Logbook(), tools.HallOfFame(maxsize=opts.hof_maxsize,
+                                                         similar=np.array_equal)
         logbook.header = ['gen','evals','avg','min','max']
 
         #initial population
+        print 'generating population..'
         pop = toolbox.population_init()
+        print 'population done..'
         start_gen = 0
 
     #directory for experiments/checkpoints
@@ -212,6 +218,7 @@ def Evolve(opts):
     
     num_ckpts = 0
     #evolving..
+
     for curr_gen in xrange(start_gen, opts.num_gens): 
 
         #stats update and verbosity

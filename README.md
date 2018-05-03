@@ -1,4 +1,4 @@
-# (Ongoing) Playing Atari Games using Neuroevolution
+# Playing Atari Games using Neuroevolution
 
 ## 1. Getting Started
 
