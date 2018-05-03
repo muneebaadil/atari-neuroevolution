@@ -85,6 +85,8 @@ def GetParser():
     #misc
     parser.add_argument('--render',action='store', type=bool, default=False, 
                         dest='render')
+    parser.add_argument('--mutiprocess',action='store', type=bool, default=True, 
+                        dest='multiprocess')
     
     return parser
 
@@ -124,8 +126,9 @@ def InitSetup(opts):
     toolbox = base.Toolbox()
 
     #distributed settings
-    pool = multiprocessing.Pool()
-    toolbox.register("map", pool.map)
+    if opts.multiprocess: 
+        pool = multiprocessing.Pool()
+        toolbox.register("map", pool.map)
 
     #registering initialization functions and game environment..
     toolbox.register("network_init", tools.initRepeat, creator.Network, 
