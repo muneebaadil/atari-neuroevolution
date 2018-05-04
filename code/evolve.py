@@ -222,9 +222,9 @@ def Evolve(opts):
         pop = toolbox.select(pop, k=opts.num_select, **opts.select_args)
         pop = algorithms.varAnd(pop, toolbox, cxpb=opts.crossover_prob, 
                                         mutpb=opts.mutate_prob)
-        pdb.set_trace()
-        fitnesses = toolbox.map(toolbox.evaluate, pop)
-        for ind, fit in izip(pop, fitnesses): 
+        invalid_pop = [p for p in pop if not p.fitness.valid]
+        fitnesses = toolbox.map(toolbox.evaluate, invalid_pop)
+        for ind, fit in izip(invalid_pop, fitnesses): 
             ind.fitness.values = fit 
 
     curr_gen += 1 
