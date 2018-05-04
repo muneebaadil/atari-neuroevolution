@@ -6,7 +6,7 @@ import random
 import os
 from time import gmtime, strftime, time 
 import pickle 
-import multiprocessing
+#import multiprocessing
 
 from utils import * 
 from evaluate import Evaluate
@@ -25,7 +25,7 @@ def GetParser():
                         dest='num_actions')
     parser.add_argument('--init_func',action='store', type=str, default='gauss',
                          dest='init_func')
-    parser.add_argument('--init_args',action='store', type=str, default='mu=0,sigma=1',
+    parser.add_argument('--init_args',action='store', type=str, default='loc=0,scale=1',
                          dest='init_args')
 
     #input/preprocess arguments
@@ -115,13 +115,14 @@ def InitSetup(opts):
     toolbox = base.Toolbox()
 
     #distributed settings
-    pool = multiprocessing.Pool()
-    toolbox.register("map", pool.map)
+    # pool = multiprocessing.Pool()
+    # toolbox.register("map", pool.map)
 
     #registering initialization functions and game environment..
     #toolbox.register("neuron_init", getattr(random, opts.init_func), **opts.init_args)
     toolbox.register("network_init", creator.Network, array('f',
-                                    np.random.normal(size=(opts.num_params))))
+                                    np.random.normal(size=(opts.num_params),
+                                    **opts.init_args)))
     toolbox.register("population_init", tools.initRepeat, list, toolbox.network_init,
                      n=opts.population_size)
 
@@ -234,7 +235,7 @@ def Evolve(opts):
     
     #final checkpoint
     num_ckpts += 1 
-    _SaveCkpts(opts.exp_dir, num_ckpts, curr_gen, pop, hof, logbook)
+    _SaveCkpts(opts.exp_dir, num_ckpts, hof)
     
 if __name__=='__main__': 
     parser = GetParser()

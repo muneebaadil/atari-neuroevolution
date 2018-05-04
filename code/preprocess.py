@@ -2,8 +2,8 @@ import numpy as np
 
 class FramesDiff(object): 
 
-    def __init__(self, scale=1.): 
-        self.frame_size = (210,160,3)
+    def __init__(self, frame_size, scale=1.): 
+        self.frame_size = frame_size
         self.prev_frame = np.zeros(self.frame_size)
         self.scale = float(scale)
         pass 
