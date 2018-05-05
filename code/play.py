@@ -1,8 +1,7 @@
-import numpy as np 
+import numpy as np
 import gym
-import os
 import argparse
-from operator import mul, add
+from operator import mul
 import pickle
 
 from utils import * 
@@ -38,17 +37,14 @@ def GetParser():
 def PostprocessOpts(opts): 
     opts.input_dim = [int(x) for x in opts.input_dim.split('x')]
     opts.dims = [reduce(mul, opts.input_dim, 1), opts.num_hidden, opts.num_actions]
-    opts.num_episodes = np.inf if (opts.num_episodes < 0) else opts.num_episodes
+    opts.num_episodes = float("inf") if (opts.num_episodes < 0) else opts.num_episodes
     opts.preprocess_args = {x.split('=')[0]: float(x.split('=')[1])\
                              for x in opts.preprocess_args.split(',')} \
                              if opts.preprocess_args != '' else {}
     return 
 
 def Play(opts): 
-    net_file = open(opts.pretrained)
-    ind = pickle.load(net_file)
-    net_file.close()
-
+    ind = np.load(opts.pretrained)
     net_dict = Ind2Network(ind, opts)
 
     game_env = gym.make(opts.game)

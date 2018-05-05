@@ -181,11 +181,13 @@ def Evolve(opts):
         print print_str
 
     def _SaveCkpts(exp_dir, num_ckpts, hof, logbook): 
-        to_save = {'network': np.array(hof[0]),'logbook':logbook}
-        for k,v in to_save.items():
-            filename = os.path.join(exp_dir, '{}.pkl'.format(k))
-            with open(filename,'w') as ckpt_file:
-                pickle.dump(v, ckpt_file)
+        
+        filename = os.path.join(exp_dir, 'network.npy')
+        np.save(filename, np.array(hof[0]))
+
+        filename = os.path.join(exp_dir, 'logbook.pkl')
+        with open(filename,'w') as f: 
+            pickle.dump(logbook,f)
 
     #initial setup and population..
     creator, toolbox, stats, logbook, hof, pop, start_gen = InitSetup(opts)
