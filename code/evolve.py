@@ -180,18 +180,12 @@ def Evolve(opts):
         print_str += ', time taken = {}'.format(time()-last_time)
         print print_str
 
-    def _SaveCkpts(exp_dir, num_ckpts, hof): 
-
-        if not os.path.exists(os.path.join(exp_dir,'checkpoints')): 
-            os.makedirs(os.path.join(exp_dir,'checkpoints'))
-        
-        ckpt_dir = os.path.join(exp_dir,'checkpoints')
-        if not os.path.exists(ckpt_dir): 
-            os.makedirs(os.path.join(ckpt_dir))
-
-        filename = os.path.join(ckpt_dir, 'hof_{}'.format(num_ckpts))
-        with open(filename,'w') as ckpt_file:
-            pickle.dump(hof, ckpt_file)
+    def _SaveCkpts(exp_dir, num_ckpts, hof, logbook): 
+        to_save = {'network': np.array(hof[0]),'logbook':logbook}
+        for k,v in to_save.items():
+            filename = os.path.join(exp_dir, '{}.pkl'.format(k))
+            with open(filename,'w') as ckpt_file:
+                pickle.dump(v, ckpt_file)
 
     #initial setup and population..
     creator, toolbox, stats, logbook, hof, pop, start_gen = InitSetup(opts)
@@ -212,14 +206,12 @@ def Evolve(opts):
         #optional checkpointing
         if (opts.save_every > 0) and (curr_gen % opts.save_every == 0): 
             num_ckpts += 1 
-            _SaveCkpts(opts.exp_dir, num_ckpts, hof)
-
+            _SaveCkpts(opts.exp_dir, num_ckpts, hof, logbook)
             #plotting
             PlotLog(logbook, opts.game_name, os.path.join(opts.exp_dir, 'plot.png'))
 
-        last_time = time()
-
         #actual evolution..
+        last_time = time()
         pop = toolbox.select(pop, k=opts.num_select, **opts.select_args)
         pop = algorithms.varAnd(pop, toolbox, cxpb=opts.crossover_prob, 
                                         mutpb=opts.mutate_prob)
@@ -235,7 +227,7 @@ def Evolve(opts):
     
     #final checkpoint
     num_ckpts += 1 
-    _SaveCkpts(opts.exp_dir, num_ckpts, hof)
+    _SaveCkpts(opts.exp_dir, num_ckpts, hof, logbook)
     
 if __name__=='__main__': 
     parser = GetParser()
