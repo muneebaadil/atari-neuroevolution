@@ -43,6 +43,11 @@ Matplotlib
                  [--exp_name EXP_NAME] [--save_every SAVE_EVERY]
                  [--hof_maxsize HOF_MAXSIZE] [--render RENDER]
     ```
+    Running this script will generate the following in `[exp-root-dir]/[exp-name]`
+    1. `config.txt`: options used to generate this experiment 
+    2. `logbook.pkl`: statistics/data of the evolution
+    3. `network.pkl`: best evolved network
+    4. `plot.png`: graph of evolution
 
 ## References
 [1] [Deep Neuroevolution: Genetic Algorithms are a Competitive Alternative for Training Deep Neural Networks for Reinforcement Learning](https://arxiv.org/abs/1712.06567)

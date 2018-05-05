@@ -21,7 +21,7 @@ def GetParser():
                          dest='input_dim')
     parser.add_argument('--num_hidden',action='store', type=int, default=6, 
                         dest='num_hidden')
-    parser.add_argument('--num_actions',action='store', type=int, default=6,
+    parser.add_argument('--num_actions',action='store', type=int, default=9,
                         dest='num_actions')
     parser.add_argument('--init_func',action='store', type=str, default='gauss',
                          dest='init_func')
@@ -61,8 +61,8 @@ def GetParser():
                          dest='select_args')
     
     #evaluation parameters
-    parser.add_argument('--game_name',action='store', type=str, default='Pong-v0',
-                         dest='game_name')
+    parser.add_argument('--game',action='store', type=str, default='Asterix-v0',
+                         dest='game')
     parser.add_argument('--num_episodes',action='store', type=int, default=1, 
                         dest='num_episodes')
 
@@ -208,7 +208,7 @@ def Evolve(opts):
             num_ckpts += 1 
             _SaveCkpts(opts.exp_dir, num_ckpts, hof, logbook)
             #plotting
-            PlotLog(logbook, opts.game_name, os.path.join(opts.exp_dir, 'plot.png'))
+            PlotLog(logbook, opts.game, os.path.join(opts.exp_dir, 'plot.png'))
 
         #actual evolution..
         last_time = time()
@@ -228,6 +228,7 @@ def Evolve(opts):
     #final checkpoint
     num_ckpts += 1 
     _SaveCkpts(opts.exp_dir, num_ckpts, hof, logbook)
+    PlotLog(logbook, opts.game, os.path.join(opts.exp_dir, 'plot.png'))
     
 if __name__=='__main__': 
     parser = GetParser()

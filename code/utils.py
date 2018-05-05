@@ -60,7 +60,7 @@ def WriteConfigToFile(fpath, optsDict):
         fobj.write('{} >> {}\n'.format(str(k), str(v)))
     fobj.close()
 
-def PlotLog(log, game_name, filename): 
+def PlotLog(log, game, filename): 
     plt.style.use('ggplot')
 
     gen = log.select('gen')
@@ -74,6 +74,6 @@ def PlotLog(log, game_name, filename):
     ax.legend()
     plt.xlabel('Generations')
     plt.ylabel('Fitness Score')
-    plt.title(game_name)
+    plt.title(game)
 
     plt.savefig(filename)

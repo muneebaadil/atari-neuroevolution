@@ -9,7 +9,7 @@ def Evaluate(ind, opts):
 
     net_dict = Ind2Network(ind, opts)
 
-    game_env = gym.make(opts.game_name)
+    game_env = gym.make(opts.game)
     pre_func = getattr(preprocess, opts.preprocess)(opts.input_dim, 
                                                     **opts.preprocess_args)
 
