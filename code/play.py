@@ -3,6 +3,7 @@ import gym
 import argparse
 from operator import mul
 import pickle
+from time import sleep 
 
 from utils import * 
 import preprocess
@@ -70,7 +71,7 @@ def Play(opts):
             net_input = pre_func(curr_input)
         
             total_reward += reward
-        
+            sleep(0.05)
         num_done += 1 
         print 'Episode {}: Reward = {}'.format(num_done, total_reward)
     
