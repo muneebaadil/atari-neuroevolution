@@ -1,6 +1,6 @@
 # Playing Atari Games using Neuroevolution
 
-![](results/air-raid.gif) ![](results/assault.gif) ![](results/asterix.gif)
+![](results/air-raid.gif) ![](results/assault.gif) ![](results/asterix.gif) ![](results/beamrider.gif)
 
 ## 1. Getting Started
 
@@ -24,7 +24,7 @@ Matplotlib
     cd code
     ```
 
-2. Run `evolve.py` script like so: 
+2. Run `evolve.py` script to evolve the agent, like so: 
     ```
     python evolve.py
     ```
@@ -51,12 +51,17 @@ Matplotlib
     3. `network.pkl`: best evolved network
     4. `plot.png`: graph of evolution
 
+3. Run `play.py` script to let the evolved agent play, like so: 
+    ```
+    python play.py 
+    ```
+    All options are mentioned below
+    ```
+    usage: play.py [-h] [--game GAME] [--num_episodes NUM_EPISODES]
+               [--input_dim INPUT_DIM] [--num_hidden NUM_HIDDEN]
+               [--num_actions NUM_ACTIONS] [--pretrained PRETRAINED]
+               [--preprocess PREPROCESS] [--preprocess_args PREPROCESS_ARGS]
+    ```
+
 ## References
 [1] [Deep Neuroevolution: Genetic Algorithms are a Competitive Alternative for Training Deep Neural Networks for Reinforcement Learning](https://arxiv.org/abs/1712.06567)
-## Author(s)
-
-**Muneeb Aadil** - [Github Profile](https://github.com/muneebaadil)
-
-Feel free to contact me in case of any queries! :) 
-
-(Email: imuneebaadil@gmail.com)
