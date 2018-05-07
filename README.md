@@ -1,6 +1,6 @@
 # Playing Atari Games using Neuroevolution
 
-![](results/asterix.gif)
+![](results/air-raid.gif) ![](results/assault.gif) ![](results/asterix.gif)
 
 ## 1. Getting Started
 
