@@ -1,0 +1,31 @@
+load >> None
+select_type >> selBest
+num_gens >> 50
+num_biases >> 41
+init_args >> {'loc': 0.0, 'scale': 1.0}
+render >> False
+preprocess_args >> {'scale': 255.0}
+exp_name >> asterix
+mutate_indpb >> 0.5
+num_actions >> 9
+mutate_prob >> 1.0
+preprocess >> FramesDiff
+exp_dir >> ../experiments/asterix
+num_select >> 10
+mutate_type >> mutGaussian
+exp_root_dir >> ../experiments/
+num_hidden >> 32
+num_params >> 29030441
+num_episodes >> 1
+select_args >> {}
+dims >> [100800, 32, 9]
+game >> Asterix-v0
+num_weights >> 29030400
+save_every >> 10
+init_func >> gauss
+hof_maxsize >> 1
+mutate_args >> {'mu': 0.0, 'sigma': 0.005}
+crossover_prob >> 0.0
+population_size >> 10
+input_dim >> [210, 160, 3]
+crossover_type >> cxTwoPoint
