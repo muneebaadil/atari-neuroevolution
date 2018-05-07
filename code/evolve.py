@@ -215,6 +215,7 @@ def Evolve(opts):
         #actual evolution..
         last_time = time()
         pop = toolbox.select(pop, k=opts.num_select, **opts.select_args)
+        pop.append(hof[0]) #elitism
         pop = algorithms.varAnd(pop, toolbox, cxpb=opts.crossover_prob, 
                                         mutpb=opts.mutate_prob)
                                         
